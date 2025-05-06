@@ -1,79 +1,78 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+);
 
 export default function Home() {
-  const [credits, setCredits] = useState(null)
-  const [text, setText] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    const fetchCredits = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      const user = session?.user
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('credits')
-        .eq('id', user.id)
-        .single()
-
-      if (!error && data) {
-        setCredits(data.credits)
-      }
-    }
-
-    fetchCredits()
-  }, [])
+  const [text, setText] = useState('');
+  const [audioUrl, setAudioUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const generateVoice = async () => {
-    setLoading(true)
-    const res = await fetch('/api/voice', {
-      method: 'POST',
-      body: JSON.stringify({ text }),
-      headers: { 'Content-Type': 'application/json' }
-    })
+    setLoading(true);
+    setAudioUrl('');
 
-    if (res.ok) {
-      const audio = await res.arrayBuffer()
-      const blob = new Blob([audio], { type: 'audio/mpeg' })
-      const url = URL.createObjectURL(blob)
-      new Audio(url).play()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-      setCredits(prev => prev - 1)
-    } else {
-      console.error(await res.text())
+    const token = session?.access_token;
+    if (!token) {
+      alert("Not logged in");
+      setLoading(false);
+      return;
     }
 
-    setLoading(false)
-  }
+    const res = await fetch('/api/fixedvoice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert("Voice generation failed: " + err.error);
+      setLoading(false);
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    setAudioUrl(url);
+    setLoading(false);
+  };
 
   return (
-    <main>
-      <h1 className="text-2xl font-bold mb-4">AI Voice Changer</h1>
-      <p className="mb-2">Credits Left: {credits}</p>
+    <main className="p-8 space-y-4">
+      <h1 className="text-3xl font-bold">AI Voice Changer</h1>
       <textarea
-        className="border rounded w-full p-2 mb-4"
-        rows="4"
-        placeholder="Enter text"
+        className="w-full border p-2 rounded"
+        rows={4}
+        placeholder="Type your text here..."
         value={text}
-        onChange={e => setText(e.target.value)}
+        onChange={(e) => setText(e.target.value)}
       />
       <button
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400"
         onClick={generateVoice}
-        disabled={loading || !text || credits <= 0}
+        disabled={loading}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
       >
         {loading ? 'Generating...' : 'Generate Voice'}
       </button>
-      {credits === 0 && <p className="text-red-600 mt-2">You have no credits left.</p>}
+      {audioUrl && (
+        <audio controls className="mt-4">
+          <source src={audioUrl} type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      )}
     </main>
-  )
+  );
 }

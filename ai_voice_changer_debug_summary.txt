@@ -1,0 +1,44 @@
+
+AI Voice Changer Debug Summary
+==============================
+
+Issue: The voice generation feature keeps showing "Generating..." without returning a result.
+
+Root Observations:
+------------------
+1. The UI loads correctly with Tailwind after fixing PostCSS and Tailwind issues.
+2. The main request hangs during the voice generation step in `/api/voice.js`.
+3. ElevenLabs API is likely not responding or receiving invalid data.
+
+Suspected Root Causes:
+----------------------
+1. Environment variable `ELEVENLABS_API_KEY` may be missing or incorrect.
+2. ElevenLabs voice ID `EXAVITQu4vr4xnSDxMaL` may not be valid or available in your ElevenLabs account.
+3. The fetch request to ElevenLabs API may be silently failing or stalling.
+
+Recommended Checks:
+-------------------
+1. Check .env.local contents to ensure this line exists:
+   ELEVENLABS_API_KEY=your_real_api_key_here
+
+2. Confirm the voice ID is valid:
+   Use this command to list your voices:
+   curl -H "xi-api-key: YOUR_KEY" https://api.elevenlabs.io/v1/voices
+
+3. Add logging to debug the issue:
+   Inside `src/pages/api/voice.js`, before the fetch request to ElevenLabs, add:
+   console.log("Sending to ElevenLabs:", text)
+
+4. After deployment, run:
+   npx vercel logs ai-voice-changer-<deployment-id>.vercel.app --since 10m
+
+   Replace <deployment-id> with the latest ID from your `npx vercel --prod` command.
+
+Fallback (Optional):
+--------------------
+To test the rest of your app without ElevenLabs, you can mock the audio response in development.
+
+Next Step:
+----------
+Upload this summary to Cursor AI and paste any insights back for validation.
+

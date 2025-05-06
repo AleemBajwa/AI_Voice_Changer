@@ -1,0 +1,16 @@
+== ElevenLabs Voice Generation Diagnostic ==
+
+1. Verifies if your ElevenLabs API is reachable and functional outside of Vercel/Next.js.
+2. Save this script as 'test-eleven.js' in your root project directory.
+3. Ensure your `.env.local` includes:
+   ELEVENLABS_API_KEY=your_real_api_key_here
+
+4. Install dependency and run the script from terminal:
+
+   npm install node-fetch
+   node test-eleven.js
+
+5. Expected Result:
+   ✅ Voice saved as output.mp3
+
+If the test fails, the terminal will show exact error from the ElevenLabs API.

@@ -1,34 +1,34 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
-  const router = useRouter()
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
+  const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError(error.message)
     } else {
-      router.push('/')
+      window.location.href = '/'
     }
   }
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Login</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <input type="email" className="w-full border p-2" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" className="w-full border p-2" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Login</button>
-        {error && <p className="text-red-600">{error}</p>}
-      </form>
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <input className="mb-2 p-2 text-black" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input className="mb-2 p-2 text-black" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button className="bg-green-500 text-black px-4 py-2 rounded" onClick={handleLogin}>Login</button>
+      {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   )
 }
