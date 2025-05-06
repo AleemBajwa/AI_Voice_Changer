@@ -1,34 +1,21 @@
 'use client'
-
-import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { useEffect } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
+  const supabase = createClientComponentClient()
 
-  const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError(error.message)
-    } else {
-      window.location.href = '/'
+  useEffect(() => {
+    const login = async () => {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: ${location.origin}/auth/callback
+        }
+      })
     }
-  }
+    login()
+  }, [supabase])
 
-  return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <input className="mb-2 p-2 text-black" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input className="mb-2 p-2 text-black" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button className="bg-green-500 text-black px-4 py-2 rounded" onClick={handleLogin}>Login</button>
-      {error && <p className="text-red-500 mt-2">{error}</p>}
-    </div>
-  )
+  return <p>Redirecting to login...</p>
 }

@@ -1,78 +1,46 @@
-'use client';
+'use client'
+import { useState } from 'react'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+export default async function Page() {
+  const supabase = createServerComponentClient({ cookies })
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
-export default function Home() {
-  const [text, setText] = useState('');
-  const [audioUrl, setAudioUrl] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const generateVoice = async () => {
-    setLoading(true);
-    setAudioUrl('');
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const token = session?.access_token;
-    if (!token) {
-      alert("Not logged in");
-      setLoading(false);
-      return;
-    }
-
-    const res = await fetch('/api/fixedvoice', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ text }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert("Voice generation failed: " + err.error);
-      setLoading(false);
-      return;
-    }
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    setAudioUrl(url);
-    setLoading(false);
-  };
+  if (!session) {
+    redirect('/login')
+  }
 
   return (
-    <main className="p-8 space-y-4">
-      <h1 className="text-3xl font-bold">AI Voice Changer</h1>
-      <textarea
-        className="w-full border p-2 rounded"
-        rows={4}
-        placeholder="Type your text here..."
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <button
-        onClick={generateVoice}
-        disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+    <main className="min-h-screen flex flex-col items-center justify-center p-8">
+      <h1 className="text-4xl font-bold text-white mb-8">Turn Text into Voice</h1>
+      <form
+        action="/api/fixedvoice"
+        method="POST"
+        className="w-full max-w-xl border p-6 rounded-lg border-green-500"
       >
-        {loading ? 'Generating...' : 'Generate Voice'}
-      </button>
-      {audioUrl && (
-        <audio controls className="mt-4">
-          <source src={audioUrl} type="audio/mpeg" />
-          Your browser does not support the audio element.
-        </audio>
-      )}
+        <textarea
+          name="text"
+          placeholder="Type something..."
+          className="w-full h-40 p-4 mb-4 bg-black border border-green-500 text-white rounded resize-none"
+        ></textarea>
+        <button
+          type="submit"
+          className="w-full bg-green-500 text-black font-semibold py-2 rounded"
+        >
+          Generate Voice
+        </button>
+      </form>
+      <a
+        href="/history"
+        className="mt-6 text-blue-400 hover:underline"
+      >
+        View Generation History
+      </a>
     </main>
-  );
+  )
 }
