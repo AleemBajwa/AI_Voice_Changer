@@ -1,46 +1,60 @@
 'use client'
-import { useState } from 'react'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
-export default async function Page() {
-  const supabase = createServerComponentClient({ cookies })
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+export default function Home() {
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  if (!session) {
-    redirect('/login')
+  const handleGenerate = async () => {
+    setLoading(true)
+
+    const supabase = createBrowserClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+
+    if (!token) {
+      alert("No session found. Redirecting to login.")
+      window.location.href = "/login"
+      return
+    }
+
+    const res = await fetch('/api/fixedvoice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text }),
+    })
+
+    const result = await res.json()
+    setLoading(false)
+    if (result.error) alert('Voice generation failed: ' + result.error)
+    else alert('Voice generated!')
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold text-white mb-8">Turn Text into Voice</h1>
-      <form
-        action="/api/fixedvoice"
-        method="POST"
-        className="w-full max-w-xl border p-6 rounded-lg border-green-500"
+    <div className="text-center p-8">
+      <h1 className="text-4xl font-bold mb-6">Turn Text into Voice</h1>
+      <textarea
+        className="w-full h-32 p-4 rounded border border-gray-500 bg-black text-white"
+        placeholder="Type something..."
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <button
+        onClick={handleGenerate}
+        className="bg-green-500 text-white px-6 py-2 rounded mt-4"
+        disabled={loading}
       >
-        <textarea
-          name="text"
-          placeholder="Type something..."
-          className="w-full h-40 p-4 mb-4 bg-black border border-green-500 text-white rounded resize-none"
-        ></textarea>
-        <button
-          type="submit"
-          className="w-full bg-green-500 text-black font-semibold py-2 rounded"
-        >
-          Generate Voice
-        </button>
-      </form>
-      <a
-        href="/history"
-        className="mt-6 text-blue-400 hover:underline"
-      >
-        View Generation History
-      </a>
-    </main>
+        {loading ? 'Generating...' : 'Generate Voice'}
+      </button>
+      <div className="mt-6">
+        <a className="text-blue-500 underline" href="/history">
+          View Generation History
+        </a>
+      </div>
+    </div>
   )
 }

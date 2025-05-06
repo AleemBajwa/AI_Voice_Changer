@@ -18,5 +18,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/', '/((?!_next|favicon.ico|login).*)'],
+  matcher: ['/', '/((?!_next|favicon.ico|login|signup).*)'],
 }
