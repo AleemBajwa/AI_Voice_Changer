@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useEffect } from "react"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function LoginPage() {
   const supabase = createClientComponentClient()
@@ -9,12 +9,13 @@ export default function LoginPage() {
   useEffect(() => {
     const login = async () => {
       await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
-          redirectTo: \${location.origin}/auth/callback\
+          redirectTo: `${location.origin}/auth/callback`
         }
       })
     }
+
     login()
   }, [supabase])
 
