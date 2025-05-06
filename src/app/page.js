@@ -40,7 +40,7 @@ export default function Home() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: Bearer ,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ text }),
     })
